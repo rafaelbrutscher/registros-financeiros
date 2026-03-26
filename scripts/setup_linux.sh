@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export DEBIAN_FRONTEND=noninteractive
+
 # Configuracao padrao (pode sobrescrever via variaveis de ambiente)
 APP_NAME="${APP_NAME:-registro-despesas-receitas}"
 APP_ENV="${APP_ENV:-production}"
@@ -36,13 +38,57 @@ set_env_value() {
 	fi
 }
 
+grant_www_data_access() {
+	if ! command -v setfacl >/dev/null 2>&1; then
+		return
+	fi
+
+	# Garante travessia ate a pasta do projeto quando ele esta em /home/*
+	local dir="${PROJECT_DIR}"
+	while [[ "${dir}" != "/" ]]; do
+		setfacl -m u:www-data:x "${dir}" || true
+		dir="$(dirname "${dir}")"
+	done
+
+	# Leitura do codigo para o PHP-FPM/Nginx
+	setfacl -R -m u:www-data:rX "${PROJECT_DIR}" || true
+
+	# Escrita nas pastas exigidas pelo Laravel
+	setfacl -R -m u:www-data:rwX "${PROJECT_DIR}/storage" "${PROJECT_DIR}/bootstrap/cache" || true
+}
+
+ensure_node_runtime() {
+	local min_version="20.19.0"
+	local current_version=""
+
+	if command -v node >/dev/null 2>&1; then
+		current_version="$(node -v | sed 's/^v//')"
+	fi
+
+	if [[ -z "${current_version}" ]] || ! dpkg --compare-versions "${current_version}" ge "${min_version}"; then
+		echo "Node.js atual (${current_version:-nao instalado}) e incompativel com Vite. Instalando Node.js 22..."
+		curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+		apt install -y nodejs
+		current_version="$(node -v | sed 's/^v//')"
+	fi
+
+	if ! dpkg --compare-versions "${current_version}" ge "${min_version}"; then
+		echo "Falha: Node.js ${current_version} ainda abaixo do minimo ${min_version}."
+		exit 1
+	fi
+
+	echo "Node.js detectado: v${current_version}"
+}
+
 echo "[1/9] Instalando pacotes do sistema..."
 apt update
 apt install -y \
 	ca-certificates \
 	curl \
+	gnupg \
 	git \
 	unzip \
+	acl \
 	nginx \
 	mysql-server \
 	php-cli \
@@ -54,9 +100,9 @@ apt install -y \
 	php-zip \
 	php-bcmath \
 	php-intl \
-	composer \
-	nodejs \
-	npm
+	composer
+
+ensure_node_runtime
 
 echo "[2/9] Habilitando servicos..."
 systemctl enable --now mysql
@@ -89,10 +135,15 @@ set_env_value "DB_USERNAME" "${DB_USERNAME}" .env
 set_env_value "DB_PASSWORD" "${DB_PASSWORD}" .env
 
 echo "[5/9] Instalando dependencias do projeto..."
+export COMPOSER_ALLOW_SUPERUSER=1
 composer install --no-interaction --prefer-dist --optimize-autoloader
 
 if [[ -f package.json ]]; then
-	npm install
+	if [[ -f package-lock.json ]]; then
+		npm ci
+	else
+		npm install
+	fi
 	npm run build
 fi
 
@@ -100,11 +151,12 @@ echo "[6/9] Configurando Laravel..."
 php artisan key:generate --force
 php artisan migrate --force
 php artisan db:seed --force
-php artisan storage:link || true
+php artisan storage:link >/dev/null 2>&1 || true
 
 echo "[7/9] Ajustando permissoes..."
 chown -R www-data:www-data storage bootstrap/cache
 chmod -R 775 storage bootstrap/cache
+grant_www_data_access
 
 echo "[8/9] Configurando Nginx..."
 PHP_FPM_SOCK="$(find /run/php -maxdepth 1 -name 'php*-fpm.sock' | head -n 1)"
@@ -138,9 +190,8 @@ server {
 	error_page 404 /index.php;
 
 	location ~ \.php$ {
+		include snippets/fastcgi-php.conf;
 		fastcgi_pass unix:${PHP_FPM_SOCK};
-		fastcgi_param SCRIPT_FILENAME \$realpath_root\$fastcgi_script_name;
-		include fastcgi_params;
 	}
 
 	location ~ /\.(?!well-known).* {

@@ -16,22 +16,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::query()->create([
-            'nome' => 'Administrador Financeiro',
+        User::query()->updateOrCreate([
             'login' => 'admin',
+        ], [
+            'nome' => 'Administrador Financeiro',
             'senha' => '123456',
             'situacao' => 'ATIVO',
         ]);
 
-        Lancamento::query()->insert([
+        $lancamentos = [
             [
                 'descricao' => 'Salario mensal',
                 'data_lancamento' => '2026-03-05',
                 'valor' => 5500.00,
                 'tipo_lancamento' => 'RECEITA',
                 'situacao' => 'PAGO',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'descricao' => 'Aluguel',
@@ -39,8 +38,6 @@ class DatabaseSeeder extends Seeder
                 'valor' => 1800.00,
                 'tipo_lancamento' => 'DESPESA',
                 'situacao' => 'PAGO',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'descricao' => 'Internet',
@@ -48,8 +45,6 @@ class DatabaseSeeder extends Seeder
                 'valor' => 130.00,
                 'tipo_lancamento' => 'DESPESA',
                 'situacao' => 'PENDENTE',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
             [
                 'descricao' => 'Freelance',
@@ -57,9 +52,18 @@ class DatabaseSeeder extends Seeder
                 'valor' => 950.00,
                 'tipo_lancamento' => 'RECEITA',
                 'situacao' => 'RECEBIDO',
-                'created_at' => now(),
-                'updated_at' => now(),
             ],
-        ]);
+        ];
+
+        foreach ($lancamentos as $lancamento) {
+            Lancamento::query()->firstOrCreate([
+                'descricao' => $lancamento['descricao'],
+                'data_lancamento' => $lancamento['data_lancamento'],
+                'valor' => $lancamento['valor'],
+                'tipo_lancamento' => $lancamento['tipo_lancamento'],
+            ], [
+                'situacao' => $lancamento['situacao'],
+            ]);
+        }
     }
 }
