@@ -18,5 +18,10 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
 	Route::get('/lancamentos', [LancamentoController::class, 'index'])->name('lancamentos.index');
+	Route::get('/lancamentos/exportar-pdf', [LancamentoController::class, 'exportPdf'])->name('lancamentos.export-pdf');
+	Route::get('/lancamentos/criar', [LancamentoController::class, 'create'])->name('lancamentos.create');
+	Route::post('/lancamentos', [LancamentoController::class, 'store'])->name('lancamentos.store');
+	Route::get('/lancamentos/{lancamento}/editar', [LancamentoController::class, 'edit'])->name('lancamentos.edit');
+	Route::put('/lancamentos/{lancamento}', [LancamentoController::class, 'update'])->name('lancamentos.update');
 	Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 });

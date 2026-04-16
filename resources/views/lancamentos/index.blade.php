@@ -14,6 +14,8 @@
             --income: #0f766e;
             --expense: #b91c1c;
             --primary: #0b3c5d;
+            --primary-soft: #dbeafe;
+            --secondary: #475569;
             --border: #d1d5db;
         }
 
@@ -40,8 +42,9 @@
             margin-bottom: 18px;
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
         }
 
         .header h1 {
@@ -55,7 +58,16 @@
             color: var(--muted);
         }
 
-        .logout-btn {
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-link,
+        .logout-btn,
+        .filter-button {
             border: 0;
             border-radius: 10px;
             background: #1f2937;
@@ -63,7 +75,63 @@
             font-weight: 700;
             padding: 10px 14px;
             cursor: pointer;
-            margin-top: 6px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .action-link.secondary {
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
+        .action-link.ghost,
+        .filter-button.ghost {
+            background: var(--secondary);
+        }
+
+        .notice {
+            margin-bottom: 18px;
+            padding: 12px 14px;
+            border-radius: 12px;
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(209, 213, 219, 0.9);
+            border-radius: 16px;
+            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.1);
+            padding: 18px;
+            margin-bottom: 18px;
+        }
+
+        .filters {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 12px;
+            align-items: end;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+
+        .field input,
+        .field select {
+            width: 100%;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            font-size: 0.95rem;
+            background: #fff;
         }
 
         .stats {
@@ -152,6 +220,23 @@
             color: #991b1b;
         }
 
+        .table-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .table-action {
+            display: inline-flex;
+            padding: 6px 10px;
+            border-radius: 999px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: var(--primary-soft);
+            color: var(--primary);
+        }
+
         .empty {
             padding: 26px;
             text-align: center;
@@ -170,8 +255,8 @@
         }
 
         @media (max-width: 900px) {
-            .header {
-                flex-direction: column;
+            .filters {
+                grid-template-columns: 1fr;
             }
 
             .stats {
@@ -196,9 +281,43 @@
                 <h1>Registro de Despesas e Receitas</h1>
                 <p>Listagem de lancamentos cadastrados</p>
             </div>
-            <form method="POST" action="{{ route('logout') }}">
-                @csrf
-                <button class="logout-btn" type="submit">Sair</button>
+            <div class="header-actions">
+                <a class="action-link secondary" href="{{ route('lancamentos.create') }}">Novo lancamento</a>
+                <a class="action-link" href="{{ route('lancamentos.export-pdf', request()->query()) }}">Exportar PDF</a>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button class="logout-btn" type="submit">Sair</button>
+                </form>
+            </div>
+        </div>
+
+        @if (session('status'))
+            <div class="notice">{{ session('status') }}</div>
+        @endif
+
+        <div class="panel">
+            <form class="filters" method="GET" action="{{ route('lancamentos.index') }}">
+                <div class="field">
+                    <label for="data_inicio">Data inicial</label>
+                    <input id="data_inicio" name="data_inicio" type="date" value="{{ $filters['data_inicio'] ?? '' }}">
+                </div>
+                <div class="field">
+                    <label for="data_fim">Data final</label>
+                    <input id="data_fim" name="data_fim" type="date" value="{{ $filters['data_fim'] ?? '' }}">
+                </div>
+                <div class="field">
+                    <label for="situacao">Situacao</label>
+                    <select id="situacao" name="situacao">
+                        <option value="">Todas</option>
+                        @foreach ($situacoes as $situacao)
+                            <option value="{{ $situacao }}" @selected(($filters['situacao'] ?? '') === $situacao)>{{ $situacao }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="field" style="display:flex; gap:10px;">
+                    <button class="filter-button" type="submit">Filtrar</button>
+                    <a class="filter-button ghost" href="{{ route('lancamentos.index') }}">Limpar</a>
+                </div>
             </form>
         </div>
 
@@ -227,6 +346,7 @@
                         <th>Valor</th>
                         <th>Tipo</th>
                         <th>Situacao</th>
+                        <th>Acoes</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -242,10 +362,15 @@
                                 </span>
                             </td>
                             <td>{{ $lancamento->situacao }}</td>
+                            <td>
+                                <div class="table-actions">
+                                    <a class="table-action" href="{{ route('lancamentos.edit', $lancamento) }}">Editar</a>
+                                </div>
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="empty">Nenhum lancamento cadastrado.</td>
+                            <td colspan="7" class="empty">Nenhum lancamento cadastrado.</td>
                         </tr>
                     @endforelse
                 </tbody>
