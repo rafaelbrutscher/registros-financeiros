@@ -19,6 +19,13 @@ warn() { echo -e "${YELLOW}[provision]${NC} $*"; }
 err()  { echo -e "${RED}[provision] ERRO:${NC} $*" >&2; exit 1; }
 step() { echo -e "\n${CYAN}──── $* ────${NC}"; }
 
+# ── Detectar se está rodando como root ────────────────────────────────────────
+if [ "$(id -u)" -eq 0 ]; then
+    IS_ROOT=true
+else
+    IS_ROOT=false
+fi
+
 # ── 1. Docker ─────────────────────────────────────────────────────────────────
 step "1/6  Docker"
 
@@ -75,8 +82,12 @@ fi
 # ── 3. Diretório de trabalho ──────────────────────────────────────────────────
 step "3/6  Diretório /opt/app"
 
-sudo mkdir -p /opt/app
-sudo chown univates:univates /opt/app
+if [ "${IS_ROOT}" = true ]; then
+    mkdir -p /opt/app
+    chown -R univates:univates /opt/app
+else
+    [ -d /opt/app ] || err "/opt/app não existe. Execute provision.sh como root na primeira instalação."
+fi
 info "/opt/app pronto."
 
 # ── 4. Repositório ────────────────────────────────────────────────────────────
@@ -84,10 +95,19 @@ step "4/6  Repositório"
 
 if [ -d "${APP_DIR}/.git" ]; then
     info "Repositório já clonado em ${APP_DIR}. Atualizando..."
-    git -C "${APP_DIR}" pull --ff-only
+    if [ "${IS_ROOT}" = true ]; then
+        chown -R univates:univates "${APP_DIR}"
+        sudo -u univates git -C "${APP_DIR}" pull --ff-only
+    else
+        git -C "${APP_DIR}" pull --ff-only
+    fi
 else
     info "Clonando repositório em ${APP_DIR}..."
-    git clone "${REPO_URL}" "${APP_DIR}"
+    if [ "${IS_ROOT}" = true ]; then
+        sudo -u univates git clone "${REPO_URL}" "${APP_DIR}"
+    else
+        git clone "${REPO_URL}" "${APP_DIR}"
+    fi
 fi
 
 # ── 5. Redes Docker ───────────────────────────────────────────────────────────
