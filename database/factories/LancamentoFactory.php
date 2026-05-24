@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Models\Lancamento;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -15,6 +16,7 @@ class LancamentoFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
             'descricao' => fake()->sentence(3),
             'data_lancamento' => fake()->dateTimeBetween('-30 days', 'now')->format('Y-m-d'),
             'valor' => fake()->randomFloat(2, 10, 9000),

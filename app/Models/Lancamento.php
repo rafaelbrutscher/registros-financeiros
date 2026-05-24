@@ -2,8 +2,11 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Lancamento extends Model
 {
@@ -12,6 +15,7 @@ class Lancamento extends Model
     protected $table = 'lancamentos';
 
     protected $fillable = [
+        'user_id',
         'descricao',
         'data_lancamento',
         'valor',
@@ -21,6 +25,51 @@ class Lancamento extends Model
 
     protected $casts = [
         'data_lancamento' => 'date',
-        'valor' => 'decimal:2',
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function scopePendentes(Builder $query): void
+    {
+        $query->where('situacao', 'PENDENTE');
+    }
+
+    public function scopeReceitas(Builder $query): void
+    {
+        $query->where('tipo_lancamento', 'RECEITA');
+    }
+
+    protected function valor(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value !== null ? round((float) $value, 2) : null,
+            set: function (mixed $value): float {
+                if (is_string($value) && str_contains($value, ',')) {
+                    $value = str_replace('.', '', $value);
+                    $value = str_replace(',', '.', $value);
+                }
+
+                return round((float) $value, 2);
+            },
+        );
+    }
+
+    protected function valorFormatado(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => 'R$ ' . number_format($this->valor ?? 0.0, 2, ',', '.'),
+        );
+    }
+
+    protected function isAtrasado(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->situacao === 'PENDENTE'
+                && $this->data_lancamento !== null
+                && $this->data_lancamento->lt(now()->startOfDay()),
+        );
+    }
 }

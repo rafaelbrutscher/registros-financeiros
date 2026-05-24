@@ -3,14 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Contracts\LancamentoRepository;
-use App\Mail\LancamentoNotificadoMail;
 use App\Models\Lancamento;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
@@ -50,29 +48,43 @@ class LancamentoController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        $lancamento = $this->lancamentos->create($this->validateLancamento($request));
+        $data = $this->validateLancamento($request);
+        $data['user_id'] = $request->user()->id;
 
-        $this->notifyLancamentoChange($lancamento, 'criado');
+        $this->lancamentos->create($data);
 
         return redirect()
             ->route('lancamentos.index')
-            ->with('status', 'Lancamento criado com sucesso.');
+            ->with('success', 'Lancamento criado com sucesso.');
     }
 
     public function edit(Lancamento $lancamento): View
     {
+        $this->authorize('update', $lancamento);
+
         return view('lancamentos.edit', $this->formViewData($lancamento, 'Editar lancamento'));
     }
 
     public function update(Request $request, Lancamento $lancamento): RedirectResponse
     {
-        $lancamento = $this->lancamentos->update($lancamento, $this->validateLancamento($request));
+        $this->authorize('update', $lancamento);
 
-        $this->notifyLancamentoChange($lancamento, 'atualizado');
+        $this->lancamentos->update($lancamento, $this->validateLancamento($request));
 
         return redirect()
             ->route('lancamentos.index')
-            ->with('status', 'Lancamento atualizado com sucesso.');
+            ->with('success', 'Lancamento atualizado com sucesso.');
+    }
+
+    public function destroy(Lancamento $lancamento): RedirectResponse
+    {
+        $this->authorize('delete', $lancamento);
+
+        $lancamento->delete();
+
+        return redirect()
+            ->route('lancamentos.index')
+            ->with('success', 'Lancamento removido com sucesso.');
     }
 
     public function exportPdf(Request $request): Response
@@ -143,14 +155,5 @@ class LancamentoController extends Controller
         $totalDespesas = $lancamentos->where('tipo_lancamento', 'DESPESA')->sum('valor');
 
         return [$totalReceitas, $totalDespesas];
-    }
-
-    private function notifyLancamentoChange(Lancamento $lancamento, string $acao): void
-    {
-        $recipient = config('finance.notification_email');
-
-        if ($recipient) {
-            Mail::to($recipient)->send(new LancamentoNotificadoMail($lancamento, $acao));
-        }
     }
 }
