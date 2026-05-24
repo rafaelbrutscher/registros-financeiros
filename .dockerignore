@@ -1,0 +1,13 @@
+.git
+.gitignore
+*.md
+!README.md
+.env
+.env.*
+!.env.example
+vendor/
+node_modules/
+public/build/
+storage/logs/*.log
+docker-compose*.yml
+.dockerignore

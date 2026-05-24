@@ -1,0 +1,65 @@
+services:
+
+  app:
+    build:
+      context: .
+      target: ci          # inclui vendor-dev + PCOV; Homolog/Prod usam target: runtime
+      args:
+        APP_UID: "1000"   # casa com UID do desenvolvedor no host (evita problemas de bind mount)
+        APP_GID: "1000"
+    ports:
+      - "8000:8080"
+    env_file: .env        # crie a partir de .env.example antes de subir
+    environment:
+      # Sobrescreve o .env local para apontar ao serviço MariaDB do compose
+      DB_HOST: mariadb
+      DB_CONNECTION: mysql
+      DB_DATABASE: registro_financeiro
+      DB_USERNAME: laravel
+      DB_PASSWORD: secret
+      # Migrations rodam via "docker compose exec app php artisan migrate --seed"
+      # Para rodar automaticamente no entrypoint, defina RUN_MIGRATIONS=true aqui
+    volumes:
+      - .:/var/www/html                        # hot-reload do código
+      - vendor_cache:/var/www/html/vendor      # preserva vendor instalado na imagem
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  mariadb:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: registro_financeiro
+      MARIADB_USER: laravel
+      MARIADB_PASSWORD: secret
+      MARIADB_ROOT_PASSWORD: rootsecret
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - app_net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  adminer:
+    image: adminer:4
+    ports:
+      - "8001:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: mariadb
+    depends_on:
+      - mariadb
+    networks:
+      - app_net
+
+volumes:
+  mariadb_data:
+  vendor_cache:
+
+networks:
+  app_net:

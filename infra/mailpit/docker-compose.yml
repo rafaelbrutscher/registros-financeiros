@@ -1,0 +1,28 @@
+services:
+  mailpit:
+    image: axllent/mailpit:v1.20
+    container_name: mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"       # UI — exposta ao host para acesso externo
+                          # SMTP :1025 não é publicada; acessível só na shared_net
+    environment:
+      MP_DATABASE: /data/mailpit.db
+    volumes:
+      - mailpit_data:/data
+    networks:
+      - shared_net
+    mem_limit: 64m
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 30s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+
+volumes:
+  mailpit_data:
+
+networks:
+  shared_net:
+    external: true
