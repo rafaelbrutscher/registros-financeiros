@@ -83,7 +83,7 @@ RUN rm -f /usr/local/etc/php-fpm.d/zz-docker.conf \
 EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-    CMD wget -qO- http://localhost:8080/healthz || exit 1
+    CMD wget -qO- http://127.0.0.1:8080/healthz || exit 1
 
 ENTRYPOINT ["/entrypoint.sh"]
 
