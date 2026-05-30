@@ -23,6 +23,7 @@ su-exec app php artisan view:clear   2>/dev/null || true
 # ── 5. Migrations opcionais (defina RUN_MIGRATIONS=true no compose) ──────────
 if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
     su-exec app php artisan migrate --force
+    su-exec app php artisan db:seed --force
 fi
 
 # ── 6. Cache de configuração apenas em produção/staging ──────────────────────
