@@ -1,0 +1,62 @@
+services:
+
+  app:
+    image: ghcr.io/rafaelbrutscher/registros-financeiros:${IMAGE_TAG:-latest}
+    build:
+      context: ../..
+      target: runtime
+    container_name: prod_app
+    ports:
+      - "8091:8080"
+    env_file: .env
+    environment:
+      DB_HOST: mariadb
+      DB_CONNECTION: mysql
+      RUN_MIGRATIONS: "true"
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    networks:
+      - prod_net
+      - shared_net
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:11
+    container_name: prod_mariadb
+    mem_limit: 192m
+    command: >
+      --innodb-buffer-pool-size=64M
+      --performance-schema=OFF
+      --max-connections=20
+    environment:
+      MARIADB_DATABASE: ${DB_DATABASE}
+      MARIADB_USER: ${DB_USERNAME}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+    volumes:
+      - prod_mariadb_data:/var/lib/mysql
+    networks:
+      - prod_net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  prod_mariadb_data:
+
+networks:
+  prod_net:
+    external: true
+  shared_net:
+    external: true
