@@ -16,13 +16,12 @@ class LancamentoNotificadoMail extends Mailable
     public function __construct(
         public Lancamento $lancamento,
         public string $acao,
-    ) {
-    }
+    ) {}
 
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Lancamento ' . $this->acao,
+            subject: 'Lancamento '.$this->acao,
         );
     }
 

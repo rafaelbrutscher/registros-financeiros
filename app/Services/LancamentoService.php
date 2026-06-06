@@ -19,7 +19,7 @@ class LancamentoService
     public function marcarComoPago(Lancamento $lancamento): void
     {
         if ($lancamento->situacao === 'PAGO') {
-            throw new LancamentoJaPagoException();
+            throw new LancamentoJaPagoException;
         }
 
         $lancamento->situacao = 'PAGO';

@@ -10,8 +10,8 @@ repositório durante toda a tarefa.
 - [x] Fase 1 — Completar aplicação (21 testes) — 2026-05-24
 - [x] Fase 2 — Containerização (imagem 86,5 MB) — 2026-05-24
 - [x] Fase 3 — Provision VM + Mailpit — 2026-05-24
-- [ ] Fase 4 — Composes Homolog/Prod + scripts up/teardown (em validação)
-- [ ] Fase 5 — GitHub Actions (CI + deploys)
+- [x] Fase 4 — Composes Homolog/Prod + scripts up/teardown — 2026-06-06
+- [ ] Fase 5 — GitHub Actions (CI + deploys) (em validação)
 - [ ] Fase 6 — Documentação e roteiro dos 13 passos
 
 ---

@@ -40,7 +40,7 @@ class LancamentoModelTest extends TestCase
 
     public function test_accessor_valor_formatado(): void
     {
-        $lancamento = new Lancamento();
+        $lancamento = new Lancamento;
         $lancamento->valor = 12345.67;
 
         $this->assertEquals('R$ 12.345,67', $lancamento->valor_formatado);
@@ -48,7 +48,7 @@ class LancamentoModelTest extends TestCase
 
     public function test_mutator_valor_aceita_formato_brasileiro(): void
     {
-        $lancamento = new Lancamento();
+        $lancamento = new Lancamento;
         $lancamento->valor = '1.234,56';
 
         $this->assertEquals(1234.56, $lancamento->valor);

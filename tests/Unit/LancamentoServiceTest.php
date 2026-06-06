@@ -14,7 +14,7 @@ class LancamentoServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new LancamentoService();
+        $this->service = new LancamentoService;
     }
 
     public function test_calcular_saldo_soma_receitas_e_subtrai_despesas(): void

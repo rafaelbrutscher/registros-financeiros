@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property-read float|null $valor
+ * @property-write float|string|null $valor
+ * @property-read string $valor_formatado
+ * @property-read bool $is_atrasado
+ */
 class Lancamento extends Model
 {
     use HasFactory;
@@ -60,7 +66,7 @@ class Lancamento extends Model
     protected function valorFormatado(): Attribute
     {
         return Attribute::make(
-            get: fn () => 'R$ ' . number_format($this->valor ?? 0.0, 2, ',', '.'),
+            get: fn () => 'R$ '.number_format($this->valor ?? 0.0, 2, ',', '.'),
         );
     }
 

@@ -20,8 +20,7 @@ class LancamentoController extends Controller
 
     public function __construct(
         private LancamentoRepository $lancamentos,
-    ) {
-    }
+    ) {}
 
     public function index(Request $request): View
     {
@@ -43,7 +42,7 @@ class LancamentoController extends Controller
 
     public function create(): View
     {
-        return view('lancamentos.create', $this->formViewData(new Lancamento(), 'Novo lancamento'));
+        return view('lancamentos.create', $this->formViewData(new Lancamento, 'Novo lancamento'));
     }
 
     public function store(Request $request): RedirectResponse
@@ -102,7 +101,7 @@ class LancamentoController extends Controller
             'filters' => $filters,
         ])->render();
 
-        $options = new Options();
+        $options = new Options;
         $options->set('isRemoteEnabled', false);
 
         $dompdf = new Dompdf($options);
@@ -134,7 +133,7 @@ class LancamentoController extends Controller
         return $request->validate([
             'data_inicio' => ['nullable', 'date'],
             'data_fim' => ['nullable', 'date', 'after_or_equal:data_inicio'],
-            'situacao' => ['nullable', 'string', 'in:' . implode(',', self::SITUACOES)],
+            'situacao' => ['nullable', 'string', 'in:'.implode(',', self::SITUACOES)],
         ]);
     }
 
@@ -144,8 +143,8 @@ class LancamentoController extends Controller
             'descricao' => ['required', 'string', 'max:255'],
             'data_lancamento' => ['required', 'date'],
             'valor' => ['required', 'numeric', 'min:0'],
-            'tipo_lancamento' => ['required', 'string', 'in:' . implode(',', self::TIPOS)],
-            'situacao' => ['required', 'string', 'in:' . implode(',', self::SITUACOES)],
+            'tipo_lancamento' => ['required', 'string', 'in:'.implode(',', self::TIPOS)],
+            'situacao' => ['required', 'string', 'in:'.implode(',', self::SITUACOES)],
         ]);
     }
 

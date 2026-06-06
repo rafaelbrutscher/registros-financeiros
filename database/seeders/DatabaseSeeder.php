@@ -53,42 +53,42 @@ class DatabaseSeeder extends Seeder
                 'tipo_lancamento' => 'RECEITA',
                 'situacao' => 'RECEBIDO',
             ],
-                        [
+            [
                 'descricao' => 'Jogo do bicho',
                 'data_lancamento' => '2026-03-05',
                 'valor' => 100.00,
                 'tipo_lancamento' => 'DESPESA',
                 'situacao' => 'PAGO',
             ],
-                        [
+            [
                 'descricao' => 'Pensão',
                 'data_lancamento' => '2026-03-05',
                 'valor' => 1000.00,
                 'tipo_lancamento' => 'DESPESA',
                 'situacao' => 'PAGO',
             ],
-                        [
+            [
                 'descricao' => 'Apostas esportivas',
                 'data_lancamento' => '2026-03-05',
                 'valor' => 5700.00,
                 'tipo_lancamento' => 'DESPESA',
                 'situacao' => 'PAGO',
             ],
-                        [
+            [
                 'descricao' => 'Vendas casadas',
                 'data_lancamento' => '2026-03-05',
                 'valor' => 900.00,
                 'tipo_lancamento' => 'RECEITA',
                 'situacao' => 'PAGO',
             ],
-                        [
+            [
                 'descricao' => 'Negociação de dívidas',
                 'data_lancamento' => '2026-03-05',
                 'valor' => 8500.00,
                 'tipo_lancamento' => 'RECEITA',
                 'situacao' => 'PAGO',
             ],
-                        [
+            [
                 'descricao' => 'Bônus',
                 'data_lancamento' => '2026-03-05',
                 'valor' => 500.00,

@@ -16,7 +16,7 @@ Route::get('/healthz', function () {
     try {
         DB::connection()->getPdo();
         $db = 'ok';
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
         $db = 'error';
     }
 
