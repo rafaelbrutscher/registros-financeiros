@@ -14,8 +14,12 @@ info() { echo -e "${GREEN}[teardown]${NC} $*"; }
 warn() { echo -e "${YELLOW}[teardown]${NC} $*"; }
 step() { echo -e "\n${YELLOW}──── $* ────${NC}"; }
 
-# ── 1. Containers ─────────────────────────────────────────────────────────────
-step "1/3  Parando containers"
+# ── 1. Containers + volumes ───────────────────────────────────────────────────
+# `down -v` remove os volumes declarados em cada compose automaticamente,
+# sem precisar adivinhar nomes. O Compose prefixa o volume com o nome do
+# projeto (a pasta), então o volume real é, p.ex., homolog_homolog_mariadb_data
+# — `down -v` resolve isso sozinho a partir do próprio arquivo.
+step "1/2  Parando containers e removendo volumes"
 
 for compose_file in \
     "${REPO_DIR}/infra/mailpit/docker-compose.yml" \
@@ -24,27 +28,15 @@ for compose_file in \
 do
     if [ -f "${compose_file}" ]; then
         stack="$(basename "$(dirname "${compose_file}")")"
-        info "Parando stack: ${stack}"
-        docker compose -f "${compose_file}" down --remove-orphans 2>/dev/null || true
+        info "Derrubando stack '${stack}' (containers + volumes)"
+        docker compose -f "${compose_file}" down -v --remove-orphans 2>/dev/null || true
     else
         warn "Compose não encontrado, pulando: ${compose_file}"
     fi
 done
 
-# ── 2. Volumes ────────────────────────────────────────────────────────────────
-step "2/3  Removendo volumes"
-
-for vol in mailpit_data mariadb_homolog_data mariadb_prod_data; do
-    if docker volume inspect "${vol}" > /dev/null 2>&1; then
-        docker volume rm "${vol}"
-        info "Volume '${vol}' removido."
-    else
-        warn "Volume '${vol}' não existe, pulando."
-    fi
-done
-
-# ── 3. Redes ──────────────────────────────────────────────────────────────────
-step "3/3  Removendo redes"
+# ── 2. Redes ──────────────────────────────────────────────────────────────────
+step "2/2  Removendo redes"
 
 for net in homolog_net prod_net shared_net; do
     if docker network inspect "${net}" > /dev/null 2>&1; then

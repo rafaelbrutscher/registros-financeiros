@@ -11,7 +11,7 @@ repositório durante toda a tarefa.
 - [x] Fase 2 — Containerização (imagem 86,5 MB) — 2026-05-24
 - [x] Fase 3 — Provision VM + Mailpit — 2026-05-24
 - [x] Fase 4 — Composes Homolog/Prod + scripts up/teardown — 2026-06-06
-- [ ] Fase 5 — GitHub Actions (CI + deploys) (em validação)
+- [x] Fase 5 — GitHub Actions (CI) + deploy por comando na VM — 2026-06-13
 - [ ] Fase 6 — Documentação e roteiro dos 13 passos
 
 ---
@@ -25,8 +25,18 @@ repositório durante toda a tarefa.
   Homolog e Prod, acessível via `smtp://mailpit:1025` nos containers da app.
 - **Disparo de e-mail**: via `LancamentoObserver` nos eventos `created` e
   `updated` (sem chamada direta no controller).
-- **CI/CD externo à VM**: GitHub Actions em runners `ubuntu-latest`.
-  Deploy via SSH direto do Actions — sem self-hosted runner na VM.
+- **CI externo à VM**: GitHub Actions em runners `ubuntu-latest` roda
+  testes, qualidade, build e push para o GHCR. Funciona na nuvem.
+- **Deploy semi-automatizado por comando (Opção B)**: a atualização dos
+  ambientes é feita rodando `bash infra/homolog/up.sh` e
+  `bash infra/prod/up.sh` na VM, que dão `docker compose pull app` (puxam
+  a imagem que o CI buildou no GHCR) e sobem o stack. **Não há deploy via
+  SSH automático**: o firewall da Univates bloqueia conexões SSH de
+  entrada vindas da nuvem do GitHub (a conexão TCP chega na porta 22 mas é
+  resetada). O enunciado permite explicitamente "digitar comando para
+  atualização dos ambientes", então o deploy por comando satisfaz o
+  requisito. Os workflows `deploy-homolog.yml` e `deploy-prod.yml` foram
+  removidos por não funcionarem nesse ambiente de rede.
 - **Análise de qualidade**: Laravel Pint (style) + Larastan nível 5 (static
   analysis), ambos executados no CI como gates obrigatórios.
 - **Registry**: GitHub Container Registry (`ghcr.io`). Tag `sha-<7-char>`
@@ -46,8 +56,8 @@ C. Versionamento — GitHub (`main` + PRs)
 D. Testes automatizados — PHPUnit 21 testes, JUnit + Clover no Actions  
 E. Análise de qualidade — Pint + Larastan no CI  
 F. Build e push da imagem — GHCR via Actions  
-G. Deploy automático em Homolog — SSH em push para `main`  
-H. Deploy manual em Prod — `workflow_dispatch` no Actions  
+G. Deploy em Homolog — comando `bash infra/homolog/up.sh` na VM (puxa imagem do GHCR)  
+H. Deploy em Prod — comando `bash infra/prod/up.sh` na VM (puxa imagem do GHCR)  
 
 **Restrições do enunciado**:
 - Banco de dados versionado (Laravel Migrations)
@@ -108,9 +118,7 @@ registros-financeiros/
 │   └── Feature/                ← 11 testes
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml              ← testes + lint + build + push GHCR
-│       ├── deploy-homolog.yml  ← SSH deploy automático em push main
-│       └── deploy-prod.yml     ← SSH deploy manual (workflow_dispatch)
+│       └── ci.yml              ← testes + lint + build + push GHCR (único workflow)
 └── infra/
     ├── provision.sh            ← bootstrap idempotente da VM
     ├── teardown.sh             ← derruba tudo (demonstração ao professor)
@@ -164,9 +172,9 @@ Imagem final: 86,5 MB. 21/21 testes passando dentro do container.
 - Volumes nomeados para persistir banco entre deploys
 - **Entregar**: 2 stacks funcionais, app acessível em :8090 e :8091
 
-### Fase 5 — GitHub Actions (CI + deploys)
+### Fase 5 — GitHub Actions (CI) + deploy por comando na VM ✅ CONCLUÍDA
 
-- `.github/workflows/ci.yml`:
+- `.github/workflows/ci.yml` (único workflow, roda na nuvem):
   1. `checkout`
   2. PHP setup + `composer install --dev`
   3. `Pint --test` (lint gate)
@@ -174,11 +182,12 @@ Imagem final: 86,5 MB. 21/21 testes passando dentro do container.
   5. `PHPUnit` — publica `junit.xml` + `clover.xml` como artifacts
   6. `docker build --target runtime`
   7. `docker push ghcr.io/<owner>/registros-financeiros:sha-<SHA>`
-- `.github/workflows/deploy-homolog.yml`: disparado em push `main` →
-  SSH na VM → `docker pull` + `compose up` + `migrate --force`
-- `.github/workflows/deploy-prod.yml`: `workflow_dispatch` manual →
-  mesma sequência no stack de prod
-- **Entregar**: pipeline verde ponta a ponta com 1 commit demo
+- **Deploy por comando (Opção B)**: na VM, `bash infra/homolog/up.sh` e
+  `bash infra/prod/up.sh` fazem `docker compose pull app` (imagem do GHCR)
+  + `up -d` + migrate. Sem deploy via SSH (firewall da Univates bloqueia
+  SSH de entrada da nuvem do GitHub). Workflows `deploy-homolog.yml` e
+  `deploy-prod.yml` foram removidos.
+- **Entregar**: CI verde na nuvem + `up.sh` puxando a imagem buildada
 
 ### Fase 6 — Documentação e roteiro dos 13 passos
 
@@ -255,10 +264,10 @@ Imagem final: 86,5 MB. 21/21 testes passando dentro do container.
 | 6 | Registrar mudança | Criar Issue no GitHub com label `tipo:feature` ou `tipo:bug` |
 | 7 | Implementar | Branch local, commit com código + migration se aplicável |
 | 8 | Versionar | `git push origin feat/...` → abrir PR → merge em `main` |
-| 9 | Integração | Aba Actions no GitHub: testes, Pint, Larastan, build, artifacts |
-| 10 | Atualizar Homolog | `deploy-homolog.yml` dispara automaticamente em push `main` |
+| 9 | Integração | Aba Actions no GitHub (`ci.yml`): testes, Pint, Larastan, build, push GHCR, artifacts |
+| 10 | Atualizar Homolog | Na VM: `bash infra/homolog/up.sh` (puxa a imagem do GHCR e sobe o stack) |
 | 11 | Homolog com mudança | Recarregar `http://177.44.248.118:8090` |
-| 12 | Atualizar Prod | Disparar `deploy-prod.yml` via `workflow_dispatch` manual |
+| 12 | Atualizar Prod | Na VM: `bash infra/prod/up.sh` (puxa a imagem do GHCR e sobe o stack) |
 | 13 | Prod com mudança | Recarregar `http://177.44.248.118:8091` |
 
 ---
@@ -284,8 +293,10 @@ Endereços que o professor pode abrir diretamente do navegador:
 - **Não use `latest` em Prod**. Sempre tag SHA explícita.
 - **RAM da VM é 1,9 GB**. MariaDB (×2) + Mailpit + 2 PHP-FPM cabem;
   não há margem para ferramentas adicionais.
-- **Deploy via SSH direto**: sem self-hosted runner. O Actions SSH na VM
-  e executa `docker compose pull && up -d`.
+- **Deploy por comando na VM (Opção B)**: a atualização é manual por
+  comando (`bash infra/{homolog,prod}/up.sh`), que faz `docker compose pull`
+  + `up -d`. Sem deploy via SSH automático — o firewall da Univates reseta
+  conexões SSH de entrada vindas da nuvem do GitHub.
 - **Porta SMTP do Mailpit (1025) não exposta** ao host — só acessível
   dentro da `shared_net`. Somente a UI (8025) é exposta.
 
