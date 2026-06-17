@@ -34,8 +34,7 @@ class Lancamento extends Model
     ];
 
     public function user(): BelongsTo
-    {djklawndoiaw
-    daw
+    {
         return $this->belongsTo(User::class);
     }
 
