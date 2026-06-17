@@ -25,10 +25,10 @@ step "1/4  Arquivo .env"
 
 if [ ! -f "${ENV_FILE}" ]; then
     cp "${DIR}/.env.example" "${ENV_FILE}"
-    exit 1
+    info ".env não existia — copiado de .env.example (valores reais). Continuando..."
+else
+    info ".env encontrado."
 fi
-
-info ".env encontrado."
 
 # ── 2. Imagem da aplicação ────────────────────────────────────────────────────
 step "2/4  Imagem da aplicação"
