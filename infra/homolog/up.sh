@@ -25,19 +25,6 @@ step "1/4  Arquivo .env"
 
 if [ ! -f "${ENV_FILE}" ]; then
     cp "${DIR}/.env.example" "${ENV_FILE}"
-    echo ""
-    echo -e "${YELLOW}┌──────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${YELLOW}│  .env criado a partir de .env.example                        │${NC}"
-    echo -e "${YELLOW}│                                                              │${NC}"
-    echo -e "${YELLOW}│  Edite o arquivo antes de continuar:                         │${NC}"
-    echo -e "${YELLOW}│    ${ENV_FILE}${NC}"
-    echo -e "${YELLOW}│                                                              │${NC}"
-    echo -e "${YELLOW}│  Valores obrigatórios:                                       │${NC}"
-    echo -e "${YELLOW}│    APP_KEY          → php artisan key:generate --show        │${NC}"
-    echo -e "${YELLOW}│    DB_PASSWORD      → senha do usuário laravel               │${NC}"
-    echo -e "${YELLOW}│    DB_ROOT_PASSWORD → senha root do MariaDB                  │${NC}"
-    echo -e "${YELLOW}└──────────────────────────────────────────────────────────────┘${NC}"
-    echo ""
     exit 1
 fi
 

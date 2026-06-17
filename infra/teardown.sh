@@ -14,11 +14,6 @@ info() { echo -e "${GREEN}[teardown]${NC} $*"; }
 warn() { echo -e "${YELLOW}[teardown]${NC} $*"; }
 step() { echo -e "\n${YELLOW}──── $* ────${NC}"; }
 
-# ── 1. Containers + volumes ───────────────────────────────────────────────────
-# `down -v` remove os volumes declarados em cada compose automaticamente,
-# sem precisar adivinhar nomes. O Compose prefixa o volume com o nome do
-# projeto (a pasta), então o volume real é, p.ex., homolog_homolog_mariadb_data
-# — `down -v` resolve isso sozinho a partir do próprio arquivo.
 step "1/2  Parando containers e removendo volumes"
 
 for compose_file in \
@@ -49,9 +44,5 @@ done
 
 # ── Banner ────────────────────────────────────────────────────────────────────
 echo ""
-echo -e "${GREEN}┌──────────────────────────────────────────────────────────────┐${NC}"
-echo -e "${GREEN}│  Teardown completo. Estado limpo para apresentação.          │${NC}"
-echo -e "${GREEN}│                                                              │${NC}"
-echo -e "${GREEN}│  Para recriar tudo:  bash infra/provision.sh                 │${NC}"
-echo -e "${GREEN}└──────────────────────────────────────────────────────────────┘${NC}"
+echo -e "${GREEN}│  Caiu tudo igual o gremio em 2021.          │${NC}"
 echo ""
