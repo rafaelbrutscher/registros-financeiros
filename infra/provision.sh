@@ -93,7 +93,15 @@ info "/opt/app pronto."
 # ── 4. Repositório ────────────────────────────────────────────────────────────
 step "4/6  Repositório"
 
-if [ -d "${APP_DIR}/.git" ]; then
+if [ "${REPO_DIR}" = "${APP_DIR}" ]; then
+    info "Rodando de dentro de ${APP_DIR}. Atualizando no lugar (git pull)..."
+    if [ "${IS_ROOT}" = true ]; then
+        chown -R univates:univates "${APP_DIR}"
+        sudo -u univates git -C "${APP_DIR}" pull --ff-only
+    else
+        git -C "${APP_DIR}" pull --ff-only
+    fi
+elif [ -d "${APP_DIR}/.git" ]; then
     info "Repositório já clonado em ${APP_DIR}. Atualizando..."
     if [ "${IS_ROOT}" = true ]; then
         chown -R univates:univates "${APP_DIR}"
