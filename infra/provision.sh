@@ -53,18 +53,26 @@ else
     curl -fsSL https://get.docker.com | sudo sh
     sudo usermod -aG docker univates
 
-    echo ""
-    echo -e "${YELLOW}┌──────────────────────────────────────────────────────────────┐${NC}"
-    echo -e "${YELLOW}│  Docker instalado com sucesso.                               │${NC}"
-    echo -e "${YELLOW}│                                                              │${NC}"
-    echo -e "${YELLOW}│  Para que o grupo 'docker' seja aplicado ao usuário          │${NC}"
-    echo -e "${YELLOW}│  'univates', é necessário fazer logout e login novamente.    │${NC}"
-    echo -e "${YELLOW}│                                                              │${NC}"
-    echo -e "${YELLOW}│  Após relogar, execute novamente:                            │${NC}"
-    echo -e "${YELLOW}│    bash infra/provision.sh                                   │${NC}"
-    echo -e "${YELLOW}└──────────────────────────────────────────────────────────────┘${NC}"
-    echo ""
-    exit 0
+    if [ "${IS_ROOT}" = true ]; then
+        info "Habilitando e iniciando o serviço do Docker..."
+        systemctl enable --now docker || err "Falha ao iniciar o serviço do Docker. Verifique: systemctl status docker"
+
+        docker info > /dev/null 2>&1 || err "Docker instalado mas o daemon não responde. Verifique: systemctl status docker"
+        info "Docker OK — $(docker --version)"
+    else
+        echo ""
+        echo -e "${YELLOW}┌──────────────────────────────────────────────────────────────┐${NC}"
+        echo -e "${YELLOW}│  Docker instalado com sucesso.                               │${NC}"
+        echo -e "${YELLOW}│                                                              │${NC}"
+        echo -e "${YELLOW}│  Para que o grupo 'docker' seja aplicado ao usuário          │${NC}"
+        echo -e "${YELLOW}│  'univates', é necessário fazer logout e login novamente.    │${NC}"
+        echo -e "${YELLOW}│                                                              │${NC}"
+        echo -e "${YELLOW}│  Após relogar, execute novamente:                            │${NC}"
+        echo -e "${YELLOW}│    bash infra/provision.sh                                   │${NC}"
+        echo -e "${YELLOW}└──────────────────────────────────────────────────────────────┘${NC}"
+        echo ""
+        exit 0
+    fi
 fi
 
 # ── 2. Plugin compose ─────────────────────────────────────────────────────────
