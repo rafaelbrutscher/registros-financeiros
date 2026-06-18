@@ -278,7 +278,7 @@
     <div class="container">
         <div class="header">
             <div>
-                <h1>brno viado</h1>
+                <h1>Sistema de receitas e despesas</h1>
                 <p>Listagem de lancamentos cadastrados</p>
             </div>
             <div class="header-actions">
