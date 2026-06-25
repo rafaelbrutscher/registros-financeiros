@@ -13,7 +13,7 @@ class LancamentoService
         $receitas = $lancamentos->where('tipo_lancamento', 'RECEITA')->sum('valor');
         $despesas = $lancamentos->where('tipo_lancamento', 'DESPESA')->sum('valor');
 
-        return (float) ($receitas + $despesas);
+        return (float) ($receitas - $despesas);
     }
 
     public function marcarComoPago(Lancamento $lancamento): void
