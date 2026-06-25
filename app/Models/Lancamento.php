@@ -36,7 +36,7 @@ class Lancamento extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-   
+    }
 
     public function scopePendentes(Builder $query): void
     {
