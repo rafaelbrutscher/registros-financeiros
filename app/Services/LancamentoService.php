@@ -10,7 +10,7 @@ class LancamentoService
 {
     public function calcularSaldo(Collection $lancamentos): float
     {
-        $receitas = $lancamentos->where('tipo_lancamento', 'RECEITA')->sum('valor');
+        $receitas = $lancamentos->where('tipo_lancamento', 'RECEITA')->sum("valor");
         $despesas = $lancamentos->where('tipo_lancamento', 'DESPESA')->sum('valor');
 
         return (float) ($receitas - $despesas);
